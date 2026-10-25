@@ -1,9 +1,7 @@
 import { hashString } from './seed';
 
-export type ImageSource = 'openai' | 'pollinations';
-
-const CACHE_PREFIX = 'wandertale-img-v1-';
-const BACKEND_TIMEOUT_MS = 30000;
+const CACHE_PREFIX = 'wandertale-img-v2-';
+const BACKEND_TIMEOUT_MS = 45000;
 
 function cacheKeyFor(prompt: string): string {
   return `${CACHE_PREFIX}${hashString(prompt)}`;
@@ -26,27 +24,18 @@ export function setCachedImage(prompt: string, dataUrl: string): void {
   }
 }
 
-/** A free, keyless, real text-to-image service used when no paid API key is configured. */
-export function pollinationsUrlFor(prompt: string, width = 1024, height = 640): string {
-  const seed = hashString(prompt) % 1_000_000;
-  const encoded = encodeURIComponent(prompt);
-  return `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${seed}&nologo=true&nofeed=true`;
-}
-
-export interface BackendImageResult {
-  imageDataUrl: string;
-}
-
 export type BackendImageOutcome =
   | { status: 'ok'; imageDataUrl: string }
-  | { status: 'not_configured' }
+  | { status: 'rate_limited'; message: string; retryAfterSeconds?: number }
   | { status: 'error'; message: string };
 
 /**
- * Attempts to generate an image via the server-side OpenAI proxy
- * (vite-plugins/imageApiPlugin.ts). Returns `not_configured` when no
- * OPENAI_API_KEY is set server-side, so the caller can fall back to the free
- * Pollinations provider instead of showing a fake success.
+ * Requests one day's photo from the server-side image proxy
+ * (vite-plugins/imageApiPlugin.ts), which generates it via OpenAI when
+ * OPENAI_API_KEY is configured, or via the free Pollinations.ai service
+ * otherwise. Both providers are called server-side so a real result (or a
+ * real, specific error) always comes back — never a placeholder presented as
+ * a success.
  */
 export async function requestBackendImage(prompt: string): Promise<BackendImageOutcome> {
   const controller = new AbortController();
@@ -60,28 +49,29 @@ export async function requestBackendImage(prompt: string): Promise<BackendImageO
       signal: controller.signal,
     });
 
-    if (res.status === 501) {
-      return { status: 'not_configured' };
+    const body = await res.json().catch(() => ({}));
+
+    if (res.ok && body.imageDataUrl) {
+      return { status: 'ok', imageDataUrl: body.imageDataUrl };
     }
 
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ message: `Request failed with status ${res.status}` }));
-      return { status: 'error', message: body.message ?? `Image request failed (${res.status}).` };
+    if (res.status === 429 || body.error === 'rate_limited') {
+      return {
+        status: 'rate_limited',
+        message: body.message ?? 'Free image provider rate limit reached.',
+        retryAfterSeconds: body.retryAfterSeconds,
+      };
     }
 
-    const body = (await res.json()) as BackendImageResult;
-    if (!body.imageDataUrl) {
-      return { status: 'error', message: 'Server response did not include image data.' };
-    }
-    return { status: 'ok', imageDataUrl: body.imageDataUrl };
+    return { status: 'error', message: body.message ?? `Image request failed (${res.status}).` };
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
       return { status: 'error', message: 'Image generation timed out.' };
     }
-    // In production (no dev/preview middleware), or if the route simply
-    // doesn't exist, this is the expected path — treat it the same as
-    // "not configured" rather than surfacing a scary network error.
-    return { status: 'not_configured' };
+    return {
+      status: 'error',
+      message: err instanceof Error ? err.message : 'Could not reach the image generation server.',
+    };
   } finally {
     window.clearTimeout(timeout);
   }
