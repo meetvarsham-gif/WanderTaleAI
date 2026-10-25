@@ -1,0 +1,72 @@
+.dest-hero {
+  position: relative;
+  background: var(--color-forest-deep);
+  color: var(--color-ivory);
+  padding: 88px 0 72px;
+  overflow: hidden;
+  scroll-margin-top: 64px;
+}
+
+.dest-hero-mark {
+  position: absolute;
+  top: -40px;
+  right: -10px;
+  width: 420px;
+  height: 260px;
+  color: var(--color-sunset-soft);
+  opacity: 0.5;
+}
+
+.dest-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+}
+
+.dest-hero-eyebrow {
+  color: var(--color-sunset-soft);
+}
+
+.dest-hero-title {
+  font-size: 68px;
+  line-height: 1.02;
+  color: var(--color-ivory);
+  margin: 18px 0 20px;
+}
+
+.dest-hero-summary {
+  font-size: 17.5px;
+  line-height: 1.6;
+  color: rgba(247, 243, 234, 0.82);
+  max-width: 600px;
+}
+
+.dest-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+.dest-hero-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-transform: capitalize;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(247, 243, 234, 0.25);
+  color: var(--color-ivory-soft);
+}
+
+@media (max-width: 720px) {
+  .dest-hero {
+    padding: 56px 0 48px;
+  }
+
+  .dest-hero-title {
+    font-size: 42px;
+  }
+}

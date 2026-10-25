@@ -1,0 +1,51 @@
+.narration-unsupported {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--color-ivory-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  max-width: 600px;
+  color: var(--color-charcoal-soft);
+  font-size: 14px;
+}
+
+.narration-unsupported svg {
+  flex-shrink: 0;
+  color: var(--color-danger);
+  margin-top: 2px;
+}
+
+.narration-play-all {
+  margin-bottom: 28px;
+}
+
+.narration-day-list {
+  display: flex;
+  flex-direction: column;
+  max-width: 620px;
+  list-style: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.narration-day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.narration-day-label {
+  font-size: 14.5px;
+  color: var(--color-charcoal);
+}
+
+.narration-row-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
